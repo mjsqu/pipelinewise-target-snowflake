@@ -18,4 +18,29 @@ unit-test:
     - pip install --upgrade pip
     - pip install .[test]
     - pytest tests/unit
-    - pylint target_snowflake
+
+# Integration testing
+integration-test:
+  stage: test
+  when: manual
+  image:
+    name: amazon/aws-cli:latest
+    entrypoint: [""]
+  # Get Snowflake Parameters from SSM Parameter Store - if AWS_ named variables exist
+  before_script:
+    - aws --version
+    - python --version
+    - aws sts get-caller-identity
+    - aws ssm get-parameters-by-path --with-decryption --path /meltano/target-snowflake | jq -r '.Parameters[] | [(.Name | split("/")[3] | ascii_upcase),.Value] | @tsv' > tests/integration/.env
+    - sed -i 's/\t/=/' tests/integration/.env
+    # Add AWS env variables to the end of the file without the TARGET_SNOWFLAKE prefix
+    - grep AWS_ tests/integration/.env | sed 's/TARGET_SNOWFLAKE_//' >> tests/integration/.env
+    # Check we have managed to obtain variables in the .env file
+    - grep SNOWFLAKE_ACCOUNT tests/integration/.env
+
+  script:
+    - python -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install .[test]
+    - pytest tests/integration -k test_loading_tables_with_no_encryption
