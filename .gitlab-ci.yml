@@ -30,9 +30,9 @@ integration-test:
   before_script:
     - aws --version
     - python --version
+    - aws sts assume-role --role-arn $AWS_ROLE --role-session-name "target_snowflake_integration_testing"
     - aws sts get-caller-identity
-    - aws ssm get-parameters-by-path --with-decryption --path /meltano/target-snowflake | jq -r '.Parameters[] | [(.Name | split("/")[3] | ascii_upcase),.Value] | @tsv' > tests/integration/.env
-    - sed -i 's/\t/=/' tests/integration/.env
+    - aws ssm get-parameters-by-path --with-decryption --path /meltano/target-snowflake --query 'Parameters[].[Name,Value]' --output text | awk -v FS='\t' -v OFS='\t' '{split($1,a,"/"); print toupper(a[4])"="$2}' > tests/integration/.env
     # Add AWS env variables to the end of the file without the TARGET_SNOWFLAKE prefix
     - grep AWS_ tests/integration/.env | sed 's/TARGET_SNOWFLAKE_//' >> tests/integration/.env
     # Check we have managed to obtain variables in the .env file
