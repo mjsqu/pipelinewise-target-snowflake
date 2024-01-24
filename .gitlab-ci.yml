@@ -45,6 +45,10 @@ integration-test:
     - grep AWS_ tests/integration/.env | sed 's/TARGET_SNOWFLAKE_//' >> tests/integration/.env
     # Check we have managed to obtain variables in the .env file
     - grep SNOWFLAKE_ACCOUNT tests/integration/.env
+    # Supplement the SSM variables with test database and schema names
+    - echo "TARGET_SNOWFLAKE_DBNAME=dwh_dev_land_raw" >> tests/integration/.env
+    - echo "TARGET_SNOWFLAKE_SCHEMA=test" >> tests/integration/.env
+    - echo "TARGET_SNOWFLAKE_FILE_FORMAT_CSV=common.parquet_format" >> tests/integration/.env
 
   script:
     - python3.8 -m venv venv
