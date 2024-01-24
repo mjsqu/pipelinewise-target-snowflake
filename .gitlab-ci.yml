@@ -29,8 +29,8 @@ integration-test:
   # Get Snowflake Parameters from SSM Parameter Store - if AWS_ named variables exist
   before_script:
     - aws --version
-    - yum -y install python3.8 python3.8-venv python3-pip
-    - python3 --version
+    - amazon-linux-extras install -y python3.8
+    - python3.8 --version
     - SESSION="$(aws sts assume-role --role-arn $AWS_ROLE --role-session-name target_snowflake_integration_testing)"
     # Extract the session token variables from the JSON payload
     - export AWS_ACCESS_KEY_ID=$(echo $SESSION | sed -r 's|.*AccessKeyId.{4}([A-Za-z0-9/+=]+).*|\1|')
@@ -47,7 +47,7 @@ integration-test:
     - grep SNOWFLAKE_ACCOUNT tests/integration/.env
 
   script:
-    - python3 -m venv venv
+    - python3.8 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip
     - pip install .[test]
