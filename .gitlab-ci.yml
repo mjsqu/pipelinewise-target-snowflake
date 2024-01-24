@@ -30,7 +30,14 @@ integration-test:
   before_script:
     - aws --version
     - python --version
-    - aws sts assume-role --role-arn $AWS_ROLE --role-session-name "target_snowflake_integration_testing"
+    - SESSION="$(aws sts assume-role --role-arn $AWS_ROLE --role-session-name target_snowflake_integration_testing)"
+    # Extract the session token variables from the JSON payload
+    - export AWS_ACCESS_KEY_ID=$(echo $SESSION | sed -r 's|.*AccessKeyId.{4}([A-Za-z0-9/+=]+).*|\1|')
+    - export AWS_SECRET_ACCESS_KEY=$(echo $SESSION | sed -r 's|.*SecretAccessKey.{4}([A-Za-z0-9/+=]+).*|\1|')
+    - export AWS_SESSION_TOKEN=$(echo $SESSION | sed -r 's|.*SessionToken.{4}([A-Za-z0-9/+=]+).*|\1|')
+    - export no_proxy=s3.${AWS_DEFAULT_REGION}.amazonaws.com
+    - export NO_PROXY=${no_proxy}
+
     - aws sts get-caller-identity
     - aws ssm get-parameters-by-path --with-decryption --path /meltano/target-snowflake --query 'Parameters[].[Name,Value]' --output text | awk -v FS='\t' -v OFS='\t' '{split($1,a,"/"); print toupper(a[4])"="$2}' > tests/integration/.env
     # Add AWS env variables to the end of the file without the TARGET_SNOWFLAKE prefix
