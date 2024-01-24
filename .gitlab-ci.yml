@@ -29,6 +29,7 @@ integration-test:
   # Get Snowflake Parameters from SSM Parameter Store - if AWS_ named variables exist
   before_script:
     - aws --version
+    - yum -y install python3 python3-pip
     - python3 --version
     - SESSION="$(aws sts assume-role --role-arn $AWS_ROLE --role-session-name target_snowflake_integration_testing)"
     # Extract the session token variables from the JSON payload
