@@ -35,3 +35,8 @@ docs/_templates/
 
 # Environment
 .env
+
+# Key files
+*.p8
+*.pem
+*.pub
