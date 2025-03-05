@@ -4,6 +4,7 @@ import snowflake.connector
 import re
 import time
 
+from tempfile import NamedTemporaryFile
 from typing import List, Dict, Union, Tuple, Set
 from singer import get_logger
 from target_snowflake import flattening
@@ -22,7 +23,6 @@ def validate_config(config):
         'account',
         'dbname',
         'user',
-        'password',
         'warehouse',
         's3_bucket',
         'stage',
@@ -33,7 +33,6 @@ def validate_config(config):
         'account',
         'dbname',
         'user',
-        'password',
         'warehouse',
         'file_format'
     ]
@@ -302,23 +301,35 @@ class DbSync:
         if self.stream_schema_message:
             stream = self.stream_schema_message['stream']
 
-        return snowflake.connector.connect(
-            user=self.connection_config['user'],
-            password=self.connection_config['password'],
-            account=self.connection_config['account'],
-            database=self.connection_config['dbname'],
-            warehouse=self.connection_config['warehouse'],
-            role=self.connection_config.get('role', None),
-            autocommit=True,
-            session_parameters={
+        conn_params = {
+                "user": self.connection_config['user'],
+                "account": self.connection_config['account'],
+                "database": self.connection_config['dbname'],
+                "warehouse": self.connection_config['warehouse'],
+                "role": self.connection_config.get('role', None),
+                "autocommit": True,
+                "session_parameters": {
                 # Quoted identifiers should be case sensitive
                 'QUOTED_IDENTIFIERS_IGNORE_CASE': 'FALSE',
                 'QUERY_TAG': create_query_tag(self.connection_config.get('query_tag'),
                                               database=self.connection_config['dbname'],
                                               schema=self.schema_name,
                                               table=self.table_name(stream, False, True))
+                }
             }
-        )
+        
+        # Set up password or keypair auth, defaulting to password if set
+        if pw := self.connection_config.get('password'):
+            conn_params['password'] = pw
+        else:
+            with NamedTemporaryFile(mode='w',delete=False) as f:
+                f.write('-----BEGIN ENCRYPTED PRIVATE KEY-----\n')
+                f.write(self.connection_config['private_key'])
+                f.write('\n-----END ENCRYPTED PRIVATE KEY-----\n')
+            conn_params['private_key_file'] = f.name
+            conn_params['private_key_file_pwd'] = self.connection_config['private_key_passphrase']
+
+        return snowflake.connector.connect(**conn_params)
 
     def query(self, query: Union[str, List[str]], params: Dict = None, max_records=0) -> List[Dict]:
         """Run an SQL query in snowflake"""

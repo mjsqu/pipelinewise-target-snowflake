@@ -1,4 +1,13 @@
-2.2.7 Latest
+2.2.8 (2025-03-05, Latest)
+-------------------
+
+*Changes*
+- Migrate to pyproject.toml
+- Update to allow keypair authentication using:
+    - private_key
+    - private_key_passphrase
+
+2.2.7 (2024-06-17)
 -------------------
 
 *Changes*
