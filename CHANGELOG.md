@@ -1,4 +1,19 @@
-2.2.8 (2025-03-05, Latest)
+2.2.10 (2025-04-29, Latest)
+-------------------
+
+*Changes*
+- Opens up snowflake-connector-python to ~=3.0
+
+2.2.9 (2025-04-29)
+-------------------
+
+**Suggest skipping this interim version - retained for compatibility issues with certifi**
+
+*Changes*
+- Pin to certifi version to mitigate Snowflake connection issues
+
+
+2.2.8 (2025-03-05)
 -------------------
 
 *Changes*
